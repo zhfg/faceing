@@ -23,6 +23,13 @@ jobs:
             clang \
             pkg-config
 
+      - name: Find libclang path
+        run: |
+          find /usr -name "libclang.so*" 2>/dev/null | head -5
+          dpkg -L libclang1 | grep \\.so
+          ls -la /usr/lib/llvm*/lib/libclang.so* 2>/dev/null || true
+          ls -la /usr/lib/x86_64-linux-gnu/libclang.so* 2>/dev/null || true
+
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
@@ -32,7 +39,7 @@ jobs:
       - name: Build
         run: cargo build --release
         env:
-          LIBCLANG_PATH: /usr/lib/llvm-14/lib
+          LIBCLANG_PATH: /usr/lib/x86_64-linux-gnu
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -118,7 +125,7 @@ jobs:
       - name: Build for Windows (cross-compile)
         run: cargo build --release --target x86_64-pc-windows-gnu
         env:
-          LIBCLANG_PATH: /usr/lib/llvm-14/lib
+          LIBCLANG_PATH: /usr/lib/x86_64-linux-gnu
           OPENCV_LINK_LIBS: "opencv_world455,opencv_videoio_ffmpeg455_64,libopenh264"
           OPENCV_LINK_PATHS: "/opt/opencv-win/x64/mingw/lib"
           OPENCV_INCLUDE_PATHS: "/opt/opencv-win/include"

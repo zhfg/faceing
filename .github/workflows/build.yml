@@ -22,7 +22,10 @@ jobs:
             pkg-config
 
       - name: Install Rust
-        uses: dtolnay/rust-action@stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
 
       - name: Build
         run: cargo build --release
@@ -50,7 +53,10 @@ jobs:
           vcpkg install opencv4[core,dnn,ffmpeg]:x64-windows-static-md
 
       - name: Install Rust
-        uses: dtolnay/rust-action@stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
 
       - name: Build
         run: cargo build --release
@@ -78,9 +84,14 @@ jobs:
           sudo apt-get install -y mingw-w64 g++-mingw-w64-x86-64
 
       - name: Install Rust
-        uses: dtolnay/rust-action@stable
+        uses: dtolnay/rust-toolchain@stable
         with:
           targets: x86_64-pc-windows-gnu
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ runner.os }}-windows-gnu
 
       - name: Download OpenCV MinGW
         run: |

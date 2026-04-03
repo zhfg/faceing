@@ -19,6 +19,8 @@ jobs:
             libopencv-dev \
             libclang-dev \
             llvm-dev \
+            libclang1 \
+            clang \
             pkg-config
 
       - name: Install Rust
@@ -29,6 +31,8 @@ jobs:
 
       - name: Build
         run: cargo build --release
+        env:
+          LIBCLANG_PATH: /usr/lib/llvm-14/lib
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -78,7 +82,13 @@ jobs:
       - name: Install cross-compilation tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y mingw-w64 g++-mingw-w64-x86-64
+          sudo apt-get install -y \
+            mingw-w64 \
+            g++-mingw-w64-x86-64 \
+            libclang-dev \
+            llvm-dev \
+            libclang1 \
+            clang
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -99,6 +109,7 @@ jobs:
       - name: Build for Windows (cross-compile)
         run: cargo build --release --target x86_64-pc-windows-gnu
         env:
+          LIBCLANG_PATH: /usr/lib/llvm-14/lib
           OPENCV_LINK_LIBS: "opencv_world455,opencv_videoio_ffmpeg455_64,libopenh264"
           OPENCV_LINK_PATHS: "/opt/opencv-win/x64/mingw/lib"
           OPENCV_INCLUDE_PATHS: "/opt/opencv-win/include"

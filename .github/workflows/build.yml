@@ -1,0 +1,104 @@
+name: Build
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libopencv-dev \
+            libclang-dev \
+            llvm-dev \
+            pkg-config
+
+      - name: Install Rust
+        uses: dtolnay/rust-action@stable
+
+      - name: Build
+        run: cargo build --release
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: rtsp-face-recognition-linux
+          path: |
+            target/release/rtsp_face_recognition
+            target/release/face_detection
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgGitCommitId: "a42af01b72c28a8e1d7b48107b33e4f286a55ef6"
+
+      - name: Install OpenCV
+        run: |
+          vcpkg install opencv4[core,dnn,ffmpeg]:x64-windows-static-md
+
+      - name: Install Rust
+        uses: dtolnay/rust-action@stable
+
+      - name: Build
+        run: cargo build --release
+        env:
+          VCPKG_ROOT: ${{ env.VCPKG_ROOT }}
+          VCPKG_DEFAULT_TRIPLET: x64-windows-static-md
+          RUSTFLAGS: "-C target-feature=+crt-static"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: rtsp-face-recognition-windows
+          path: |
+            target/release/rtsp_face_recognition.exe
+            target/release/face_detection.exe
+
+  build-windows-cross:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install cross-compilation tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mingw-w64 g++-mingw-w64-x86-64
+
+      - name: Install Rust
+        uses: dtolnay/rust-action@stable
+        with:
+          targets: x86_64-pc-windows-gnu
+
+      - name: Download OpenCV MinGW
+        run: |
+          wget -q https://github.com/huihut/OpenCV-MinGW-Build/archive/refs/tags/OpenCV-4.5.5-x64.zip -O opencv.zip
+          unzip -q opencv.zip
+          sudo mv OpenCV-MinGW-Build-OpenCV-4.5.5-x64 /opt/opencv-win
+
+      - name: Build for Windows (cross-compile)
+        run: cargo build --release --target x86_64-pc-windows-gnu
+        env:
+          OPENCV_LINK_LIBS: "opencv_world455,opencv_videoio_ffmpeg455_64,libopenh264"
+          OPENCV_LINK_PATHS: "/opt/opencv-win/x64/mingw/lib"
+          OPENCV_INCLUDE_PATHS: "/opt/opencv-win/include"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: rtsp-face-recognition-windows-cross
+          path: |
+            target/x86_64-pc-windows-gnu/release/rtsp_face_recognition.exe
+            target/x86_64-pc-windows-gnu/release/face_detection.exe

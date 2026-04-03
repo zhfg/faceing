@@ -1,0 +1,72 @@
+# Windows 交叉编译环境
+# 使用方法:
+#   docker build -f Dockerfile.windows -t rtsp-face-win .
+#   docker run -v $(pwd):/workspace rtsp-face-win
+
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# 安装基础依赖
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    cmake \
+    curl \
+    git \
+    pkg-config \
+    mingw-w64 \
+    mingw-w64-tools \
+    g++-mingw-w64-x86-64 \
+    wget \
+    unzip \
+    && rm -rf /var/lib/apt/lists/*
+
+# 安装 Rust
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+ENV PATH="/root/.cargo/bin:${PATH}"
+
+# 添加 Windows 目标
+RUN rustup target add x86_64-pc-windows-gnu
+
+# 下载并编译 OpenCV for Windows
+WORKDIR /opt
+
+# 下载 OpenCV 源码
+RUN wget -q https://github.com/opencv/opencv/archive/refs/tags/4.9.0.zip -O opencv.zip \
+    && unzip -q opencv.zip \
+    && mv opencv-4.9.0 opencv \
+    && rm opencv.zip
+
+# 下载 opencv_contrib
+RUN wget -q https://github.com/opencv/opencv_contrib/archive/refs/tags/4.9.0.zip -O opencv_contrib.zip \
+    && unzip -q opencv_contrib.zip \
+    && mv opencv_contrib-4.9.0 opencv_contrib \
+    && rm opencv_contrib.zip
+
+# 编译 OpenCV for Windows (MinGW)
+RUN mkdir -p opencv/build && cd opencv/build \
+    && cmake .. \
+    -DCMAKE_TOOLCHAIN_FILE=/usr/share/mingw/toolchain-x86_64-w64-mingw32.cmake \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DBUILD_SHARED_LIBS=OFF \
+    -DBUILD_TESTS=OFF \
+    -DBUILD_PERF_TESTS=OFF \
+    -DBUILD_EXAMPLES=OFF \
+    -DWITH_FFMPEG=ON \
+    -DWITH_GSTREAMER=OFF \
+    -DWITH_WIN32UI=OFF \
+    -DOPENCV_ENABLE_ALLOCATOR_STATS=OFF \
+    -DOPENCV_EXTRA_MODULES_PATH=/opt/opencv_contrib/modules \
+    && make -j$(nproc) \
+    && make install
+
+# 设置环境变量
+ENV OPENCV_LINK_LIBS="opencv_core,opencv_imgproc,opencv_videoio,opencv_highgui,opencv_imgcodecs,opencv_dnn"
+ENV OPENCV_LINK_PATHS="/usr/local/lib"
+ENV OPENCV_INCLUDE_PATHS="/usr/local/include"
+
+# 工作目录
+WORKDIR /workspace
+
+# 默认命令
+CMD ["/bin/bash", "-c", "./build-windows.sh"]

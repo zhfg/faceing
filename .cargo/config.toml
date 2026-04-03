@@ -1,0 +1,13 @@
+[target.x86_64-pc-windows-gnu]
+linker = "x86_64-w64-mingw32-gcc"
+ar = "x86_64-w64-mingw32-ar"
+rustflags = [
+    "-C", "target-feature=+crt-static",
+    "-C", "link-arg=-static",
+]
+
+[target.x86_64-pc-windows-msvc]
+# 使用 MSVC 工具链需要 Windows 上的 Visual Studio
+rustflags = [
+    "-C", "target-feature=+crt-static",
+]

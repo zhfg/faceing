@@ -47,11 +47,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup vcpkg
-        uses: lukka/run-vcpkg@v11
+      - name: Cache vcpkg
+        uses: actions/cache@v4
         with:
-          vcpkgGitCommitId: "a42af01b72c28a8e1d7b48107b33e4f286a55ef6"
-          vcpkgJsonGlob: "vcpkg.json"
+          path: |
+            C:/vcpkg
+            ${{ github.workspace }}/vcpkg_installed
+          key: ${{ runner.os }}-vcpkg-opencv4-${{ hashFiles('.github/workflows/build.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-vcpkg-opencv4-
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -59,11 +63,16 @@ jobs:
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
 
+      - name: Install OpenCV via vcpkg
+        run: |
+          vcpkg integrate install
+          vcpkg install opencv4[core,dnn,ffmpeg]:x64-windows-release
+
       - name: Build
         run: cargo build --release
         env:
-          VCPKG_ROOT: ${{ github.workspace }}/vcpkg
-          VCPKG_DEFAULT_TRIPLET: x64-windows-static-md
+          VCPKG_ROOT: C:/vcpkg
+          VCPKG_DEFAULT_TRIPLET: x64-windows-release
           RUSTFLAGS: "-C target-feature=+crt-static"
 
       - name: Upload artifacts

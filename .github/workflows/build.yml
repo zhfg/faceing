@@ -47,10 +47,7 @@ jobs:
         uses: lukka/run-vcpkg@v11
         with:
           vcpkgGitCommitId: "a42af01b72c28a8e1d7b48107b33e4f286a55ef6"
-
-      - name: Install OpenCV
-        run: |
-          vcpkg install opencv4[core,dnn,ffmpeg]:x64-windows-static-md
+          vcpkgJsonGlob: "vcpkg.json"
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -61,7 +58,7 @@ jobs:
       - name: Build
         run: cargo build --release
         env:
-          VCPKG_ROOT: ${{ env.VCPKG_ROOT }}
+          VCPKG_ROOT: ${{ github.workspace }}/vcpkg
           VCPKG_DEFAULT_TRIPLET: x64-windows-static-md
           RUSTFLAGS: "-C target-feature=+crt-static"
 

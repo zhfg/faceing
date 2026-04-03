@@ -2,17 +2,9 @@
   "name": "rtsp-face-recognition",
   "version": "1.0.0",
   "dependencies": [
-    "opencv4"
-  ],
-  "features": {
-    "opencv4": {
-      "description": "OpenCV with DNN and FFmpeg support",
-      "dependencies": [
-        {
-          "name": "opencv4",
-          "features": ["dnn", "ffmpeg"]
-        }
-      ]
+    {
+      "name": "opencv4",
+      "features": ["dnn", "ffmpeg"]
     }
-  }
+  ]
 }
